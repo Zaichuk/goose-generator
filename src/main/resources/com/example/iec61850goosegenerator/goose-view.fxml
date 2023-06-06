@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<VBox alignment="CENTER" prefHeight="527.0" prefWidth="821.0" spacing="20.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/19" fx:controller="com.example.iec61850goosegenerator.Controller">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+   <ButtonBar prefHeight="40.0" prefWidth="200.0" />
+   <AnchorPane prefHeight="469.0" prefWidth="720.0">
+      <children>
+         <Button fx:id="starButton" layoutX="204.0" layoutY="387.0" onAction="#onStartButtonClick" prefHeight="25.0" prefWidth="159.0" text="Start" />
+         <Button fx:id="stopButton" layoutX="386.0" layoutY="387.0" minWidth="44.0" onAction="#onStopButtonClick" prefHeight="25.0" prefWidth="159.0" text="Stop" />
+         <Text layoutX="21.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Src MAC" />
+         <Text layoutX="21.0" layoutY="77.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Dest MAC" wrappingWidth="53.080078125" />
+         <TextField fx:id="macSrc" layoutX="83.0" layoutY="26.0" />
+         <TextField fx:id="macDst" layoutX="83.0" layoutY="60.0" />
+         <Text layoutX="21.0" layoutY="111.0" strokeType="OUTSIDE" strokeWidth="0.0" text="GocbRef" />
+         <TextField fx:id="gocbRef" layoutX="83.0" layoutY="94.0" />
+         <Text layoutX="21.0" layoutY="148.0" strokeType="OUTSIDE" strokeWidth="0.0" text="DatSet" />
+         <Text layoutX="25.0" layoutY="188.0" strokeType="OUTSIDE" strokeWidth="0.0" text="GoID" />
+         <Text layoutX="14.0" layoutY="229.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Simulation" wrappingWidth="67.21484375" />
+         <Text layoutX="17.0" layoutY="269.0" strokeType="OUTSIDE" strokeWidth="0.0" text="ConfRef" />
+         <Text layoutX="21.0" layoutY="308.0" strokeType="OUTSIDE" strokeWidth="0.0" text="NdsCom" />
+         <TextField fx:id="datSet" layoutX="85.0" layoutY="131.0" />
+         <TextField fx:id="goID" layoutX="83.0" layoutY="171.0" />
+         <TextField fx:id="simulation" layoutX="83.0" layoutY="212.0" />
+         <TextField fx:id="confRef" layoutX="83.0" layoutY="252.0" />
+         <TextField fx:id="ndsCom" layoutX="85.0" layoutY="291.0" />
+         <Text layoutX="476.0" layoutY="39.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Data" wrappingWidth="45.322265625">
+            <font>
+               <Font name="Arial Black" size="12.0" />
+            </font>
+         </Text>
+         <TextField fx:id="dataField" layoutX="316.0" layoutY="60.0" />
+         <TextField fx:id="dataField1" layoutX="316.0" layoutY="94.0" />
+         <TextField fx:id="dataField2" layoutX="316.0" layoutY="131.0" />
+         <TextField fx:id="dataField3" layoutX="316.0" layoutY="171.0" />
+         <TextField fx:id="dataField4" layoutX="538.0" layoutY="60.0" />
+         <TextField fx:id="dataField5" layoutX="538.0" layoutY="94.0" />
+         <TextField fx:id="dataField6" layoutX="538.0" layoutY="131.0" />
+         <TextField fx:id="dataField7" layoutX="538.0" layoutY="171.0" />
+      </children>
+   </AnchorPane>
+</VBox>
