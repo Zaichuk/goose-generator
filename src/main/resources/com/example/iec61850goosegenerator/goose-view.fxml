@@ -39,14 +39,14 @@
                <Font name="Arial Black" size="12.0" />
             </font>
          </Text>
-         <TextField fx:id="dataField" layoutX="316.0" layoutY="60.0" />
-         <TextField fx:id="dataField1" layoutX="316.0" layoutY="94.0" />
-         <TextField fx:id="dataField2" layoutX="316.0" layoutY="131.0" />
-         <TextField fx:id="dataField3" layoutX="316.0" layoutY="171.0" />
-         <TextField fx:id="dataField4" layoutX="538.0" layoutY="60.0" />
-         <TextField fx:id="dataField5" layoutX="538.0" layoutY="94.0" />
-         <TextField fx:id="dataField6" layoutX="538.0" layoutY="131.0" />
-         <TextField fx:id="dataField7" layoutX="538.0" layoutY="171.0" />
+         <TextField fx:id="data" layoutX="316.0" layoutY="60.0" />
+         <TextField fx:id="data1" layoutX="316.0" layoutY="94.0" />
+         <TextField fx:id="data2" layoutX="316.0" layoutY="131.0" />
+         <TextField fx:id="data3" layoutX="316.0" layoutY="171.0" />
+         <TextField fx:id="data4" layoutX="538.0" layoutY="60.0" />
+         <TextField fx:id="data5" layoutX="538.0" layoutY="94.0" />
+         <TextField fx:id="data6" layoutX="538.0" layoutY="131.0" />
+         <TextField fx:id="data7" layoutX="538.0" layoutY="171.0" />
       </children>
    </AnchorPane>
 </VBox>

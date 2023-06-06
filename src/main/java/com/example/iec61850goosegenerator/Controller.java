@@ -29,21 +29,21 @@ public class Controller {
     @FXML
     private TextField ndsCom;
     @FXML
-    private TextField dataField;
+    private TextField data;
     @FXML
-    private TextField dataField1;
+    private TextField data1;
     @FXML
-    private TextField dataField2;
+    private TextField data2;
     @FXML
-    private TextField dataField3;
+    private TextField data3;
     @FXML
-    private TextField dataField4;
+    private TextField data4;
     @FXML
-    private TextField dataField5;
+    private TextField data5;
     @FXML
-    private TextField dataField6;
+    private TextField data6;
     @FXML
-    private TextField dataField7;
+    private TextField data7;
     private SendingPackets sendingPacket = new SendingPackets();
     ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
     ScheduledExecutorService transitionSendingThread = Executors.newSingleThreadScheduledExecutor();
@@ -88,7 +88,7 @@ public class Controller {
 
     private void setGoosePacketByTextFields() {
 
-        TextField[] textFieldsArray = new TextField[]{macDst, macSrc, gocbRef, datSet, goID, dataField, dataField1, dataField2, dataField3, dataField4, dataField5, dataField6, dataField7};
+        TextField[] textFieldsArray = new TextField[]{macDst, macSrc, gocbRef, datSet, goID, data, data1, data2, data3, data4, data5, data6, data7};
         Class<? extends GoosePacket> aClass = goosePacket.getClass();
         Field[] declaredFields = aClass.getDeclaredFields();
 
@@ -119,7 +119,7 @@ public class Controller {
         goosePacket.setConfRef(Integer.valueOf(confRef.getText()));
         goosePacket.setNdsCom(Boolean.getBoolean(ndsCom.getText()));
 
-        boolean[] data = {Boolean.getBoolean(dataField.getText()), Boolean.getBoolean(dataField1.getText()), Boolean.getBoolean(dataField2.getText()), Boolean.getBoolean(dataField3.getText()), Boolean.getBoolean(dataField4.getText()), Boolean.getBoolean(dataField5.getText()), Boolean.getBoolean(dataField6.getText()), Boolean.getBoolean(dataField7.getText())};
+        boolean[] data = {Boolean.getBoolean(this.data.getText()), Boolean.getBoolean(data1.getText()), Boolean.getBoolean(data2.getText()), Boolean.getBoolean(data3.getText()), Boolean.getBoolean(data4.getText()), Boolean.getBoolean(data5.getText()), Boolean.getBoolean(data6.getText()), Boolean.getBoolean(data7.getText())};
 
         goosePacket.setNumDatSetEntries(8);
         goosePacket.setAllData(data);
