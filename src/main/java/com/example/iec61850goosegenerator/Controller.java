@@ -40,8 +40,10 @@ public class Controller {
     private TextField data6;
     @FXML
     private TextField data7;
+
     private SendingPackets sendingPacket = new SendingPackets();
     ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
+
 //    ScheduledExecutorService transitionSendingThread = Executors.newSingleThreadScheduledExecutor();
 
     private ScheduledFuture steadySendingTask;
@@ -66,22 +68,20 @@ public class Controller {
         sendingPacket.setNicName("VirtualBox Host-Only Ethernet Adapter" );
 
         sendingPacket.startInitialization();
-        if (steadySendingTask == null) {
-            steadySendingTask = steadySendingThread.scheduleWithFixedDelay(() -> {
-                sendingPacket.sendPackets(goosePacket);
-                sqNumForSending.incrementAndGet();
-                goosePacket.setSqNum(sqNumForSending.get());
-
-
-            }, 1, 2, TimeUnit.SECONDS);
-        }
+        startSteadySending();
 
     }
 
     @FXML
-    public void onStopButtonClick(ActionEvent actionEvent) {// shutDown или отмена задания
-        steadySendingTask.cancel(true);
-        steadySendingTask = null;
+    public void onStopButtonClick(ActionEvent actionEvent) {
+        if (steadySendingTask!=null) {
+            steadySendingTask.cancel(true);
+            steadySendingTask = null;
+        }
+        if (transitionSendingTask != null) {
+            transitionSendingTask.cancel(true);
+            transitionSendingTask = null;
+        }
     }
 
     private void setGoosePacketByTextFields() {
@@ -177,19 +177,38 @@ public class Controller {
         int executorCount = 2;
         if (transitionSendingTask == null) {
             while (System.currentTimeMillis() < endTime) {
+                ScheduledExecutorService transitionSendingExecutors = Executors.newScheduledThreadPool(executorCount);
 
-                ExecutorService transitionSendingExecutors = Executors.newFixedThreadPool(executorCount);
-                transitionSendingTask = transitionSendingExecutors.submit(() -> sendingPacket.sendPackets(goosePacket));
-                executorCount *= 2;
+//                ExecutorService transitionSendingExecutors = Executors.newFixedThreadPool(executorCount);
+
+                transitionSendingExecutors.scheduleWithFixedDelay(() -> sendingPacket.sendPackets(goosePacket),200,10,TimeUnit.MILLISECONDS);
+//                transitionSendingTask = transitionSendingExecutors.submit(() -> sendingPacket.sendPackets(goosePacket));
+             //   executorCount *= 2;
             }
             transitionSendingTask.cancel(true);
             transitionSendingTask = null;
+            startSteadySending();
 
 
 
         }
 
     }
+
+
+    private void startSteadySending(){
+        if (steadySendingTask == null) {
+            steadySendingTask = steadySendingThread.scheduleWithFixedDelay(() -> {
+                sendingPacket.sendPackets(goosePacket);
+                sqNumForSending.incrementAndGet();
+                goosePacket.setSqNum(sqNumForSending.get());
+
+
+            }, 1, 2, TimeUnit.SECONDS);
+        }
+    }
+
+
 
 
 
