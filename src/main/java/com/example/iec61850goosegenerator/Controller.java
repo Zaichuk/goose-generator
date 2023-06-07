@@ -4,6 +4,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,6 +45,7 @@ public class Controller {
     @FXML
     private TextField data7;
 
+
     private SendingPackets sendingPacket = new SendingPackets();
     ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
 
@@ -74,7 +79,7 @@ public class Controller {
 
     @FXML
     public void onStopButtonClick(ActionEvent actionEvent) {
-        if (steadySendingTask!=null) {
+        if (steadySendingTask != null) {
             steadySendingTask.cancel(true);
             steadySendingTask = null;
         }
@@ -83,6 +88,7 @@ public class Controller {
             transitionSendingTask = null;
         }
     }
+
 
     private void setGoosePacketByTextFields() {
 
@@ -143,7 +149,7 @@ public class Controller {
         goosePacket.setTimeAllowedtoLive(4805);
         goosePacket.setDatSet(datSet.getText());
         goosePacket.setGoID(goID.getText());
-         goosePacket.setStNum(0);
+        goosePacket.setStNum(0);
         goosePacket.setStNum(0);
 
 
@@ -158,9 +164,12 @@ public class Controller {
         goosePacket.setNumDatSetEntries(8);
         goosePacket.setAllData(data);
 
+        // Files.lines(Path.of("src/main/resources/com/example/iec61850goosegenerator/Data.txt").
+        saveData();
+
         confRef.textProperty().addListener((observable, oldValue, newValue) -> {
-            goosePacket.setConfRef(Integer.valueOf(newValue));
-            startTransitionSending();
+                    goosePacket.setConfRef(Integer.valueOf(newValue));
+                    startTransitionSending();
                 }
 
         );
@@ -168,7 +177,7 @@ public class Controller {
 
     }
 
-    private void startTransitionSending(){
+    private void startTransitionSending() {
         steadySendingTask.cancel(true);
         steadySendingTask = null;
 
@@ -181,14 +190,13 @@ public class Controller {
 
 //                ExecutorService transitionSendingExecutors = Executors.newFixedThreadPool(executorCount);
 
-                transitionSendingExecutors.scheduleWithFixedDelay(() -> sendingPacket.sendPackets(goosePacket),200,10,TimeUnit.MILLISECONDS);
+                transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> sendingPacket.sendPackets(goosePacket), 200, 10, TimeUnit.MILLISECONDS);
 //                transitionSendingTask = transitionSendingExecutors.submit(() -> sendingPacket.sendPackets(goosePacket));
-             //   executorCount *= 2;
+                //   executorCount *= 2;
             }
             transitionSendingTask.cancel(true);
             transitionSendingTask = null;
             startSteadySending();
-
 
 
         }
@@ -196,7 +204,7 @@ public class Controller {
     }
 
 
-    private void startSteadySending(){
+    private void startSteadySending() {
         if (steadySendingTask == null) {
             steadySendingTask = steadySendingThread.scheduleWithFixedDelay(() -> {
                 sendingPacket.sendPackets(goosePacket);
@@ -209,8 +217,80 @@ public class Controller {
     }
 
 
+    public void saveData() {
+        File file = new File("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
+        try {
+            if (file.exists()) file.createNewFile();
+            PrintWriter pw = new PrintWriter(file);
+            pw.println(macSrc.getText());
+            pw.println(macDst.getText());
+            pw.println(gocbRef.getText());
+            pw.println(datSet.getText());
+            pw.println(goID.getText());
+            pw.println(simulation.getText());
+            pw.println(confRef.getText());
+            pw.println(ndsCom.getText());
+            pw.println(data.getText());
+            pw.println(data1.getText());
+            pw.println(data2.getText());
+            pw.println(data3.getText());
+            pw.println(data4.getText());
+            pw.println(data5.getText());
+            pw.println(data6.getText());
+            pw.println(data7.getText());
+            pw.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void pasteData(TextField[] textFieldsData) {
 
 
+//        try {
+//            Files.lines(Path.of("src/main/resources/com/example/iec61850goosegenerator/Data.txt")).forEach(el->{
+//            //    System.out.println(el);
+//                for (int i = 0; i < textFieldsData.length; i++) {
+//                    System.out.println(Arrays.toString(textFieldsData));
+//                    textFieldsData[i].setText(el);
+//                }
+//            });
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+
+
+        BufferedReader br = null;
+        try {
+
+
+            br = new BufferedReader(new FileReader("src/main/resources/com/example/iec61850goosegenerator/Data.txt" ));
+            String line;
+
+
+            int i = 0;
+            while ((line = br.readLine()) != null) {
+                textFieldsData[i].setText(line);
+                i++;
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void insertDataButtonClick(ActionEvent actionEvent) {
+        TextField[] textFieldsArray = { macSrc, macDst, gocbRef, datSet, goID,simulation,confRef,ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
+
+        pasteData(textFieldsArray);
+    }
 
 
 //
