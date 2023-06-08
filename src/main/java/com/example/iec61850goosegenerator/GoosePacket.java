@@ -1,6 +1,8 @@
 package com.example.iec61850goosegenerator;
 
 import com.example.iec61850goosegenerator.ByteConverter;
+import javafx.fxml.FXML;
+import javafx.scene.control.TextField;
 import lombok.Data;
 
 import java.nio.ByteBuffer;
@@ -66,10 +68,25 @@ public class GoosePacket {
 
     private final byte dataSetTag = (byte) 0xab;
     private byte dataSetLen = 0x18;
+    private boolean data;
 
+    private boolean data1;
+
+    private boolean data2;
+
+    private boolean data3;
+
+    private boolean data4;
+
+    private boolean data5;
+
+    private boolean data6;
+
+    private boolean data7;
     private final byte dataTag = (byte) 0x83;
     private final byte dataLen = 0x01;
-    private boolean[] allData = new boolean[8];
+
+    private boolean[] allData = {data,data1,data2,data3,data4,data5,data6,data7};
 
 
     public byte[] createGoosePayload() {
