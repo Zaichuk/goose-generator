@@ -1,19 +1,14 @@
 package com.example.iec61850goosegenerator;
 
-import javafx.animation.AnimationTimer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import lombok.SneakyThrows;
-import org.pcap4j.packet.Packet;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 public class Controller {
     @FXML
@@ -52,11 +47,10 @@ public class Controller {
 
     private SendingPackets sendingPacket = new SendingPackets();
     private ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
-
-//    ScheduledExecutorService transitionSendingThread = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
 
     private ScheduledFuture steadySendingTask;
-    private ScheduledFuture<?> transitionSendingTask;
+    private ScheduledFuture transitionSendingTask;
     private AtomicInteger stNumForSending = new AtomicInteger(0);
     private AtomicInteger sqNumForSending = new AtomicInteger(0);
 
@@ -68,8 +62,14 @@ public class Controller {
 
 
         setGoosePacketByTextFields();
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        checkTextFieldsCorrectness(alert);
 
-        goosePacket.setStNum(sqNumForSending.get());
+        File dataFile = new File("com/example/iec61850goosegenerator/Data.txt" );
+        if (!dataFile.exists()) {
+            saveData();
+        }
 
 
         sendingPacket.setNicName("VirtualBox Host-Only Ethernet Adapter" );
@@ -151,8 +151,9 @@ public class Controller {
         goosePacket.setTimeAllowedtoLive(4805);
         goosePacket.setDatSet(datSet.getText());
         goosePacket.setGoID(goID.getText());
-        goosePacket.setStNum(0);
-        goosePacket.setStNum(0);
+
+        goosePacket.setStNum(stNumForSending.get());
+        goosePacket.setSqNum(sqNumForSending.get());
 
 
         goosePacket.setSimulation(Boolean.getBoolean(simulation.getText()));
@@ -166,14 +167,11 @@ public class Controller {
         goosePacket.setNumDatSetEntries(8);
         goosePacket.setAllData(data);
 
-        File dataFile = new File("com/example/iec61850goosegenerator/Data.txt" );
-        if (!dataFile.exists()) {
-            saveData();
-        }
 
         confRef.textProperty().addListener((observable, oldValue, newValue) -> {
                     goosePacket.setConfRef(Integer.valueOf(newValue));
                     startTransitionSending();
+
                 }
 
         );
@@ -181,43 +179,95 @@ public class Controller {
 
     }
 
+    //
 
+    private void checkTextFieldsCorrectness(Alert alert) {
+        if (!macSrc.getText().matches("([a-zA-Z0-9]{2}:){5}[a-zA-Z0-9]{2}" )) {
+            alert.setContentText("Invalid Src MAC" );
+            alert.showAndWait();
+        } else if (!macDst.getText().matches("([a-zA-Z0-9]{2}:){5}[a-zA-Z0-9]{2}" )) {
+            alert.setContentText("Invalid Dst MAC" );
+            alert.showAndWait();
+        } else if (!gocbRef.getText().matches("[a-zA-Z0-9_]{1,}/LLN0\\$GO\\$[a-zA-Z0-9_]{1,}" )) {
+            alert.setContentText("Invalid gocbRef" );
+            alert.showAndWait();
+        } else if (!datSet.getText().matches("[a-zA-Z0-9_]{1,}/LLN0\\$GOOSE[a-zA-Z0-9_]{1,}" )) {
+            alert.setContentText("Invalid datSet" );
+            alert.showAndWait();
+        } else if (!goID.getText().matches("[A-Z0-9]{4}_[A-Z0-9]{3}_\\d{2}")) {
+            alert.setContentText("Invalid GoID" );
+            alert.showAndWait();
+        } else if (!simulation.getText().equals("true" ) || !simulation.getText().equals("false" )) {
+            alert.setContentText("Invalid simulation" );
+            alert.showAndWait();
+        } else if (!confRef.getText().matches("[0-9]{1,}" )) {
+            alert.setContentText("Invalid confRef" );
+            alert.showAndWait();
+        } else if (!ndsCom.getText().equals("true" ) || !ndsCom.getText().equals("false" )) {
+            alert.setContentText("Invalid ndsCom" );
+            alert.showAndWait();
+        } else if (!data.getText().equals("true" ) || !data.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data1.getText().equals("true" ) || !data1.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data2.getText().equals("true" ) || !data2.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data3.getText().equals("true" ) || !data3.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data4.getText().equals("true" ) || !data4.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data5.getText().equals("true" ) || !data5.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data6.getText().equals("true" ) || !data6.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        } else if (!data7.getText().equals("true" ) || !data7.getText().equals("false" )) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+        }
 
+    }
 
 
     @SneakyThrows
     private void startTransitionSending() {
-        steadySendingTask.cancel(true);
-        steadySendingTask = null;
-        ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
-        sqNumForSending.set(0);
-        goosePacket.setSqNum(sqNumForSending.get());
-        AtomicInteger cycleCount = new AtomicInteger(1);
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + 2000;
+        if (!steadySendingTask.isCancelled() && transitionSendingTask == null) {
+            steadySendingTask.cancel(true);
+            steadySendingTask = null;
+            sqNumForSending.set(0);
+            goosePacket.setSqNum(sqNumForSending.get());
+            AtomicInteger cycleCount = new AtomicInteger(1);
+            long startTime = System.currentTimeMillis();
+            long endTime = startTime + 2000;
 
-        transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
+            transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
 
 
-            for (int i = 0; i < Math.pow(2, cycleCount.get()) ; i++) {
-                if (!(System.currentTimeMillis()<endTime)){
-                    break;
+                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
+                    if (!(System.currentTimeMillis() < endTime)) {
+                        break;
+                    }
+                    sendingPacket.sendPackets(goosePacket);
+                    stNumForSending.incrementAndGet();
+                    goosePacket.setStNum(stNumForSending.get());
+
+
                 }
-                sendingPacket.sendPackets(goosePacket);
-                stNumForSending.incrementAndGet();
-                goosePacket.setStNum(stNumForSending.get());
+                cycleCount.incrementAndGet();
 
+            }, 0, 10, TimeUnit.MILLISECONDS);
+            Thread.sleep(2000);
+            transitionSendingTask.cancel(true);
+            transitionSendingTask = null;
+            startSteadySending();
 
-            }
-            cycleCount.incrementAndGet();
-
-        }, 200, 10, TimeUnit.MILLISECONDS);
-        Thread.sleep(2000);
-        transitionSendingTask.cancel(true);
-        transitionSendingTask = null;
-        startSteadySending();
-
-
+        }
     }
 
 
@@ -237,7 +287,7 @@ public class Controller {
     public void saveData() {
         File file = new File("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
         try {
-            if (file.exists()) file.createNewFile();
+            file.createNewFile();
             PrintWriter pw = new PrintWriter(file);
             pw.println(macSrc.getText());
             pw.println(macDst.getText());
