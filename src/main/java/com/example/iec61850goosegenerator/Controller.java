@@ -1,8 +1,11 @@
 package com.example.iec61850goosegenerator;
 
+import javafx.animation.AnimationTimer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import lombok.SneakyThrows;
+import org.pcap4j.packet.Packet;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -10,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public class Controller {
     @FXML
@@ -47,13 +51,13 @@ public class Controller {
 
 
     private SendingPackets sendingPacket = new SendingPackets();
-    ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
 
 //    ScheduledExecutorService transitionSendingThread = Executors.newSingleThreadScheduledExecutor();
 
     private ScheduledFuture steadySendingTask;
-    private Future<?> transitionSendingTask;
-    //    private AtomicInteger stNumForSending = new AtomicInteger(0);
+    private ScheduledFuture<?> transitionSendingTask;
+    private AtomicInteger stNumForSending = new AtomicInteger(0);
     private AtomicInteger sqNumForSending = new AtomicInteger(0);
 
     GoosePacket goosePacket = new GoosePacket();
@@ -64,11 +68,9 @@ public class Controller {
 
 
         setGoosePacketByTextFields();
-        AtomicInteger sqNumForSending = new AtomicInteger(0);
 
         goosePacket.setStNum(sqNumForSending.get());
 
-        /*сделать проверку на null чтобы только один раз иницаилизировать*/
 
         sendingPacket.setNicName("VirtualBox Host-Only Ethernet Adapter" );
 
@@ -164,8 +166,10 @@ public class Controller {
         goosePacket.setNumDatSetEntries(8);
         goosePacket.setAllData(data);
 
-        // Files.lines(Path.of("src/main/resources/com/example/iec61850goosegenerator/Data.txt").
-        saveData();
+        File dataFile = new File("com/example/iec61850goosegenerator/Data.txt" );
+        if (!dataFile.exists()) {
+            saveData();
+        }
 
         confRef.textProperty().addListener((observable, oldValue, newValue) -> {
                     goosePacket.setConfRef(Integer.valueOf(newValue));
@@ -177,29 +181,36 @@ public class Controller {
 
     }
 
+
+
+
+
+    @SneakyThrows
     private void startTransitionSending() {
         steadySendingTask.cancel(true);
         steadySendingTask = null;
+        ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
+        sqNumForSending.set(0);
+        goosePacket.setSqNum(sqNumForSending.get());
+        AtomicInteger cycleCount = new AtomicInteger(1);
 
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + 2000;
-        int executorCount = 2;
-        if (transitionSendingTask == null) {
-            while (System.currentTimeMillis() < endTime) {
-                ScheduledExecutorService transitionSendingExecutors = Executors.newScheduledThreadPool(executorCount);
+        transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
 
-//                ExecutorService transitionSendingExecutors = Executors.newFixedThreadPool(executorCount);
 
-                transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> sendingPacket.sendPackets(goosePacket), 200, 10, TimeUnit.MILLISECONDS);
-//                transitionSendingTask = transitionSendingExecutors.submit(() -> sendingPacket.sendPackets(goosePacket));
-                //   executorCount *= 2;
+            for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
+                sendingPacket.sendPackets(goosePacket);
+                stNumForSending.incrementAndGet();
+                goosePacket.setStNum(stNumForSending.get());
+
             }
-            transitionSendingTask.cancel(true);
-            transitionSendingTask = null;
-            startSteadySending();
+            cycleCount.incrementAndGet();
 
+        }, 200, 10, TimeUnit.MILLISECONDS);
+        Thread.sleep(2000);
+        transitionSendingTask.cancel(true);
+        transitionSendingTask = null;
+        startSteadySending();
 
-        }
 
     }
 
@@ -247,19 +258,6 @@ public class Controller {
     public void pasteData(TextField[] textFieldsData) {
 
 
-//        try {
-//            Files.lines(Path.of("src/main/resources/com/example/iec61850goosegenerator/Data.txt")).forEach(el->{
-//            //    System.out.println(el);
-//                for (int i = 0; i < textFieldsData.length; i++) {
-//                    System.out.println(Arrays.toString(textFieldsData));
-//                    textFieldsData[i].setText(el);
-//                }
-//            });
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-
-
         BufferedReader br = null;
         try {
 
@@ -286,8 +284,9 @@ public class Controller {
         }
     }
 
+    @FXML
     public void insertDataButtonClick(ActionEvent actionEvent) {
-        TextField[] textFieldsArray = { macSrc, macDst, gocbRef, datSet, goID,simulation,confRef,ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
+        TextField[] textFieldsArray = {macSrc, macDst, gocbRef, datSet, goID, simulation, confRef, ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
 
         pasteData(textFieldsArray);
     }
