@@ -17,17 +17,7 @@ import static org.reflections.Reflections.log;
 @Data
 
 public class SendingPackets {
-//
-//    static {
-//
-//        try {
-//            for (PcapNetworkInterface nic : Pcaps.findAllDevs()) {
-//                log.info("Found NIC {}", nic);
-//            }
-//        } catch (PcapNativeException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+
 
 
     private String nicName;
@@ -42,28 +32,31 @@ public class SendingPackets {
         }
     }
 
+
+    private Packet bildGoosePacket(GoosePacket packet) {
+        byte[] payload = packet.createGoosePayload();
+
+        UnknownPacket.Builder gooseBuilder = new UnknownPacket.Builder();
+        gooseBuilder.rawData(payload);
+
+
+        EthernetPacket.Builder etherBuilder = new EthernetPacket.Builder();
+        etherBuilder
+                .dstAddr(MacAddress.getByName(packet.getMacDst()))
+                .srcAddr(MacAddress.getByName(packet.getMacSrc()))
+                .type(new EtherType((short) 0x88b8, "IEC61850/GOOSE" ))
+                .payloadBuilder(gooseBuilder)
+                .paddingAtBuild(true);
+        return etherBuilder.build();
+    }
+
     public void sendPackets(GoosePacket packet) {
         if (handle != null) {
 
-
-            byte[] payload = packet.createGoosePayload();
-
-            UnknownPacket.Builder gooseBuilder = new UnknownPacket.Builder();
-            gooseBuilder.rawData(payload);
-
-
-            EthernetPacket.Builder etherBuilder = new EthernetPacket.Builder();
-            etherBuilder
-                    .dstAddr(MacAddress.getByName(packet.getMacDst()))
-                    .srcAddr(MacAddress.getByName(packet.getMacSrc()))
-                    .type(new EtherType((short) 0x88b8, "IEC61850/GOOSE"))
-                    .payloadBuilder(gooseBuilder)
-                    .paddingAtBuild(true);
-            Packet p = etherBuilder.build();
+            Packet p = bildGoosePacket(packet);
 
             try {
                 handle.sendPacket(p);
-                //System.out.println(p.toString());
                 log.debug(p.toString());
             } catch (NotOpenException e) {
                 throw new RuntimeException(e);
@@ -82,11 +75,9 @@ public class SendingPackets {
 
         if (nic.isPresent()) {
             handle = nic.get().openLive(1500, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, 10);
-         //   System.out.println("network handler created " + nic.get());
             log.info("network handler created {}", nic.get());
         } else {
-        //    System.out.println("network interface not found");
-            log.error("network interface not found");
+            log.error("network interface not found" );
         }
     }
 }
