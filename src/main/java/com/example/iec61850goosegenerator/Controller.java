@@ -193,14 +193,20 @@ public class Controller {
         sqNumForSending.set(0);
         goosePacket.setSqNum(sqNumForSending.get());
         AtomicInteger cycleCount = new AtomicInteger(1);
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + 2000;
 
         transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
 
 
-            for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
+            for (int i = 0; i < Math.pow(2, cycleCount.get()) ; i++) {
+                if (!(System.currentTimeMillis()<endTime)){
+                    break;
+                }
                 sendingPacket.sendPackets(goosePacket);
                 stNumForSending.incrementAndGet();
                 goosePacket.setStNum(stNumForSending.get());
+
 
             }
             cycleCount.incrementAndGet();
