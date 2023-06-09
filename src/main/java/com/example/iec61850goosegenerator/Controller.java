@@ -45,14 +45,16 @@ public class Controller {
     private TextField data7;
 
 
-    private SendingPackets sendingPacket = new SendingPackets();
-    private ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
-    private ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
+    private final SendingPackets sendingPacket = new SendingPackets();
+    private final ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
 
     private ScheduledFuture steadySendingTask;
     private ScheduledFuture transitionSendingTask;
     private AtomicInteger stNumForSending = new AtomicInteger(0);
     private AtomicInteger sqNumForSending = new AtomicInteger(0);
+    private boolean isDataCorrect;
+
 
     GoosePacket goosePacket = new GoosePacket();
 
@@ -61,22 +63,28 @@ public class Controller {
     public void onStartButtonClick(ActionEvent actionEvent) {
 
 
-        setGoosePacketByTextFields();
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
         checkTextFieldsCorrectness(alert);
 
-        File dataFile = new File("com/example/iec61850goosegenerator/Data.txt" );
-        if (!dataFile.exists()) {
-            saveData();
+        goosePacket.setTimeAllowedtoLive(4805);
+        goosePacket.setNumDatSetEntries(8);
+
+
+        if (isDataCorrect) {
+            TextField[] textFieldsArray = {macSrc, macDst, gocbRef, datSet, goID, simulation, confRef, ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
+
+
+            File dataFile = new File("com/example/iec61850goosegenerator/Data.txt" );
+            if (!dataFile.exists()) {
+                saveData(textFieldsArray);
+            }
+
+
+            sendingPacket.setNicName("VirtualBox Host-Only Ethernet Adapter" );
+
+            sendingPacket.startInitialization();
+            startSteadySending();
         }
-
-
-        sendingPacket.setNicName("VirtualBox Host-Only Ethernet Adapter" );
-
-        sendingPacket.startInitialization();
-        startSteadySending();
-
     }
 
     @FXML
@@ -168,76 +176,107 @@ public class Controller {
         goosePacket.setAllData(data);
 
 
-        confRef.textProperty().addListener((observable, oldValue, newValue) -> {
-                    goosePacket.setConfRef(Integer.valueOf(newValue));
-                    startTransitionSending();
-
-                }
-
-        );
 
 
     }
 
-    //
+
+
 
     private void checkTextFieldsCorrectness(Alert alert) {
-        if (!macSrc.getText().matches("([a-zA-Z0-9]{2}:){5}[a-zA-Z0-9]{2}" )) {
+
+        if (!checkMacAdressCorrectness(macSrc.getText())) {
             alert.setContentText("Invalid Src MAC" );
             alert.showAndWait();
-        } else if (!macDst.getText().matches("([a-zA-Z0-9]{2}:){5}[a-zA-Z0-9]{2}" )) {
+            isDataCorrect = false;
+        } else if (!checkMacAdressCorrectness(macDst.getText())) {
             alert.setContentText("Invalid Dst MAC" );
             alert.showAndWait();
-        } else if (!gocbRef.getText().matches("[a-zA-Z0-9_]{1,}/LLN0\\$GO\\$[a-zA-Z0-9_]{1,}" )) {
+            isDataCorrect = false;
+
+        } else if (!checkGocbRefCorrectness(gocbRef.getText())) {
             alert.setContentText("Invalid gocbRef" );
             alert.showAndWait();
-        } else if (!datSet.getText().matches("[a-zA-Z0-9_]{1,}/LLN0\\$GOOSE[a-zA-Z0-9_]{1,}" )) {
+            isDataCorrect = false;
+
+        } else if (!checkDatSetCorrectness(datSet.getText())) {
             alert.setContentText("Invalid datSet" );
             alert.showAndWait();
-        } else if (!goID.getText().matches("[A-Z0-9]{4}_[A-Z0-9]{3}_\\d{2}")) {
+            isDataCorrect = false;
+
+        } else if (!checkGoIdCorrectness(goID.getText())) {
             alert.setContentText("Invalid GoID" );
             alert.showAndWait();
-        } else if (!simulation.getText().equals("true" ) || !simulation.getText().equals("false" )) {
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(simulation.getText())) {
             alert.setContentText("Invalid simulation" );
             alert.showAndWait();
-        } else if (!confRef.getText().matches("[0-9]{1,}" )) {
+            isDataCorrect = false;
+
+        } else if (!checkIntegerTextCorrectness(confRef.getText())) {
             alert.setContentText("Invalid confRef" );
             alert.showAndWait();
-        } else if (!ndsCom.getText().equals("true" ) || !ndsCom.getText().equals("false" )) {
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(ndsCom.getText())) {
+            System.out.println(ndsCom.getText());
+            System.out.println(!ndsCom.getText().matches("^(true|false)$" ));
             alert.setContentText("Invalid ndsCom" );
             alert.showAndWait();
-        } else if (!data.getText().equals("true" ) || !data.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data1.getText().equals("true" ) || !data1.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data2.getText().equals("true" ) || !data2.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data3.getText().equals("true" ) || !data3.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data4.getText().equals("true" ) || !data4.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data5.getText().equals("true" ) || !data5.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data6.getText().equals("true" ) || !data6.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        } else if (!data7.getText().equals("true" ) || !data7.getText().equals("false" )) {
-            alert.setContentText("Invalid Data" );
-            alert.showAndWait();
-        }
+            isDataCorrect = false;
 
+        } else if (!checkBooleanTextCorrectness(data.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data1.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data2.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data3.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data4.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data5.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data6.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else if (!checkBooleanTextCorrectness(data7.getText())) {
+            alert.setContentText("Invalid Data" );
+            alert.showAndWait();
+            isDataCorrect = false;
+
+        } else {
+
+            isDataCorrect = true;
+        }
+//
     }
 
-
+    //!steadySendingTask.isCancelled()
     @SneakyThrows
     private void startTransitionSending() {
-        if (!steadySendingTask.isCancelled() && transitionSendingTask == null) {
+        if (steadySendingTask != null && transitionSendingTask == null) {
             steadySendingTask.cancel(true);
             steadySendingTask = null;
             sqNumForSending.set(0);
@@ -284,70 +323,324 @@ public class Controller {
     }
 
 
-    public void saveData() {
-        File file = new File("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
+    public void saveData(TextField[] textFields) {
+
+
         try {
-            file.createNewFile();
-            PrintWriter pw = new PrintWriter(file);
-            pw.println(macSrc.getText());
-            pw.println(macDst.getText());
-            pw.println(gocbRef.getText());
-            pw.println(datSet.getText());
-            pw.println(goID.getText());
-            pw.println(simulation.getText());
-            pw.println(confRef.getText());
-            pw.println(ndsCom.getText());
-            pw.println(data.getText());
-            pw.println(data1.getText());
-            pw.println(data2.getText());
-            pw.println(data3.getText());
-            pw.println(data4.getText());
-            pw.println(data5.getText());
-            pw.println(data6.getText());
-            pw.println(data7.getText());
-            pw.close();
+
+
+            FileWriter writer = new FileWriter("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
+
+
+            for (TextField tf : textFields) {
+                writer.write(tf.getText());
+                writer.write(System.lineSeparator());
+
+            }
+
+
+            writer.close();
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+
     }
 
     public void pasteData(TextField[] textFieldsData) {
 
 
-        BufferedReader br = null;
         try {
-
-
-            br = new BufferedReader(new FileReader("src/main/resources/com/example/iec61850goosegenerator/Data.txt" ));
+            FileReader fileReader = new FileReader("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line;
-
-
             int i = 0;
-            while ((line = br.readLine()) != null) {
+            while ((line = bufferedReader.readLine()) != null) {
                 textFieldsData[i].setText(line);
                 i++;
+
             }
+            bufferedReader.close();
+            fileReader.close();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            try {
-                br.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         }
+
+
     }
 
     @FXML
     public void insertDataButtonClick(ActionEvent actionEvent) {
         TextField[] textFieldsArray = {macSrc, macDst, gocbRef, datSet, goID, simulation, confRef, ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
-
         pasteData(textFieldsArray);
     }
 
+    @FXML
+    public void initialize() {
 
+
+        macSrc.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkMacAdressCorrectness(newValue)) {
+                        goosePacket.setMacSrc(newValue);
+                        startTransitionSending();
+//
+                    }
+
+                }
+
+        );
+
+        macDst.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkMacAdressCorrectness(newValue)) {
+                        goosePacket.setMacDst(newValue);
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+        gocbRef.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkGocbRefCorrectness(newValue)) {
+                        goosePacket.setGocbRef(newValue);
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+        datSet.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkDatSetCorrectness(newValue)) {
+                        goosePacket.setDatSet(newValue);
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+
+        goID.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkGoIdCorrectness(newValue)) {
+                        goosePacket.setGoID(newValue);
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+
+        simulation.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setSimulation(Boolean.valueOf(newValue));
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+        simulation.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setSimulation(Boolean.valueOf(newValue));
+                        startTransitionSending();
+
+                    }
+
+                }
+
+        );
+
+
+        confRef.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkIntegerTextCorrectness(newValue)) {
+                        goosePacket.setConfRef(Integer.valueOf(newValue));
+                        startTransitionSending();
+
+                    }
+                }
+
+        );
+
+        ndsCom.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setNdsCom(Boolean.valueOf(newValue));
+                        startTransitionSending();
+//
+                    }
+
+                }
+
+        );
+
+        data.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData(Boolean.valueOf(newValue));
+                         startTransitionSending();
+                    }
+
+                }
+
+        );
+
+
+        data1.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData1(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+        data2.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData2(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+
+        data2.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData2(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+
+        data3.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData3(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+        data4.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData4(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+        data5.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData5(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+        data6.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData6(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+        data7.textProperty().addListener((observable, oldValue, newValue) -> {
+
+
+                    if (checkBooleanTextCorrectness(newValue)) {
+                        goosePacket.setData7(Boolean.valueOf(newValue));
+                        startTransitionSending();
+                    }
+
+                }
+
+        );
+
+
+    }
+
+    private boolean checkMacAdressCorrectness(String s) {
+        return s.matches("([a-zA-Z0-9]{2}:){5}[a-zA-Z0-9]{2}" );
+    }
+
+    private boolean checkGocbRefCorrectness(String s) {
+        return s.matches("[a-zA-Z0-9_]{1,}/LLN0\\$GO\\$[a-zA-Z0-9_]{1,}" );
+    }
+
+
+    private boolean checkDatSetCorrectness(String s) {
+        return s.matches("[a-zA-Z0-9_]{1,}/LLN0\\$GOOSE[a-zA-Z0-9_]{1,}" );
+    }
+
+
+    private boolean checkGoIdCorrectness(String s) {
+        return s.matches("[A-Z0-9]{4}_[A-Z0-9]{3}_\\d{2}" );// мб сделать совокупность символов и тире
+    }
+
+
+    private boolean checkIntegerTextCorrectness(String s) {
+        return s.matches("[0-9]{1,}" );
+    }
+
+    private boolean checkBooleanTextCorrectness(String s) {
+        return s.matches("^(true|false)$" );
+    }
 //
 //    private void addListenerForTextFields() {
 //        destField.textProperty().addListener((observable, oldValue, newValue) -> {
