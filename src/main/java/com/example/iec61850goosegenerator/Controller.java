@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import lombok.SneakyThrows;
 
 import java.io.*;
@@ -66,11 +67,12 @@ public class Controller {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         checkTextFieldsCorrectness(alert);
 
-        goosePacket.setTimeAllowedtoLive(4805);
-        goosePacket.setNumDatSetEntries(8);
+//        goosePacket.setTimeAllowedtoLive(4805);
+//        goosePacket.setNumDatSetEntries(8);
 
 
         if (isDataCorrect) {
+            setGoosePacketByTextFields();
             TextField[] textFieldsArray = {macSrc, macDst, gocbRef, datSet, goID, simulation, confRef, ndsCom, data, data1, data2, data3, data4, data5, data6, data7};
 
 
@@ -156,7 +158,7 @@ public class Controller {
         goosePacket.setMacSrc(macSrc.getText());
 
         goosePacket.setGocbRef(gocbRef.getText());
-        goosePacket.setTimeAllowedtoLive(4805);
+        goosePacket.setTimeAllowedtoLive(3000);
         goosePacket.setDatSet(datSet.getText());
         goosePacket.setGoID(goID.getText());
 
@@ -164,16 +166,28 @@ public class Controller {
         goosePacket.setSqNum(sqNumForSending.get());
 
 
-        goosePacket.setSimulation(Boolean.getBoolean(simulation.getText()));
+        goosePacket.setSimulation(Boolean.valueOf(simulation.getText()));
         goosePacket.setConfRef(Integer.valueOf(confRef.getText()));
-        goosePacket.setNdsCom(Boolean.getBoolean(ndsCom.getText()));
+        goosePacket.setNdsCom(Boolean.valueOf(ndsCom.getText()));
 
         /*тут соит сетить поля data в goosePacket*/
 
-        boolean[] data = {Boolean.getBoolean(this.data.getText()), Boolean.getBoolean(data1.getText()), Boolean.getBoolean(data2.getText()), Boolean.getBoolean(data3.getText()), Boolean.getBoolean(data4.getText()), Boolean.getBoolean(data5.getText()), Boolean.getBoolean(data6.getText()), Boolean.getBoolean(data7.getText())};
+//        boolean[] data = {Boolean.getBoolean(this.data.getText()), Boolean.getBoolean(data1.getText()), Boolean.getBoolean(data2.getText()), Boolean.getBoolean(data3.getText()), Boolean.getBoolean(data4.getText()), Boolean.getBoolean(data5.getText()), Boolean.getBoolean(data6.getText()), Boolean.getBoolean(data7.getText())};
+
+
+        goosePacket.setData(Boolean.valueOf(data.getText()));
+        goosePacket.setData1(Boolean.valueOf(data1.getText()));
+        goosePacket.setData2(Boolean.valueOf(data2.getText()));
+        goosePacket.setData3(Boolean.valueOf(data3.getText()));
+        goosePacket.setData4(Boolean.valueOf(data4.getText()));
+        goosePacket.setData5(Boolean.valueOf(data5.getText()));
+        goosePacket.setData6(Boolean.valueOf(data6.getText()));
+        goosePacket.setData7(Boolean.valueOf(data7.getText()));
+
+
 
         goosePacket.setNumDatSetEntries(8);
-        goosePacket.setAllData(data);
+     //   goosePacket.setAllData(data);
 
 
 
@@ -220,8 +234,6 @@ public class Controller {
             isDataCorrect = false;
 
         } else if (!checkBooleanTextCorrectness(ndsCom.getText())) {
-            System.out.println(ndsCom.getText());
-            System.out.println(!ndsCom.getText().matches("^(true|false)$" ));
             alert.setContentText("Invalid ndsCom" );
             alert.showAndWait();
             isDataCorrect = false;
@@ -282,29 +294,38 @@ public class Controller {
             sqNumForSending.set(0);
             goosePacket.setSqNum(sqNumForSending.get());
             AtomicInteger cycleCount = new AtomicInteger(1);
+            AtomicInteger time = new AtomicInteger(2);
+
             long startTime = System.currentTimeMillis();
             long endTime = startTime + 2000;
 
             transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
 
 
-                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
-                    if (!(System.currentTimeMillis() < endTime)) {
-                        break;
-                    }
+//                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
+//                    if (!(System.currentTimeMillis() < endTime)) {
+//                        break;
+//                    }
+                if (time.get()==2000) {
+                    transitionSendingTask.cancel(true);
+                    transitionSendingTask = null;
+                    startSteadySending();
+
+                }
+                    time.set((int) Math.pow(time.get(),cycleCount.get()));
                     sendingPacket.sendPackets(goosePacket);
                     stNumForSending.incrementAndGet();
                     goosePacket.setStNum(stNumForSending.get());
 
 
-                }
+
                 cycleCount.incrementAndGet();
 
-            }, 0, 10, TimeUnit.MILLISECONDS);
-            Thread.sleep(2000);
-            transitionSendingTask.cancel(true);
-            transitionSendingTask = null;
-            startSteadySending();
+            }, 0, time.get(), TimeUnit.MILLISECONDS);
+//            Thread.sleep(2000);
+//            transitionSendingTask.cancel(true);
+//            transitionSendingTask = null;
+//            startSteadySending();
 
         }
     }
@@ -318,7 +339,7 @@ public class Controller {
                 goosePacket.setSqNum(sqNumForSending.get());
 
 
-            }, 1, 2, TimeUnit.SECONDS);
+            }, 0, 2, TimeUnit.SECONDS);
         }
     }
 
@@ -382,235 +403,72 @@ public class Controller {
     public void initialize() {
 
 
-        macSrc.textProperty().addListener((observable, oldValue, newValue) -> {
+        data.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data.getText())) {
+                goosePacket.setData(Boolean.valueOf(data.getText()));
+                startTransitionSending();
 
+            }
+        });
 
-                    if (checkMacAdressCorrectness(newValue)) {
-                        goosePacket.setMacSrc(newValue);
-                        startTransitionSending();
-//
-                    }
 
-                }
 
-        );
+        data1.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data1.getText())) {
+                goosePacket.setData(Boolean.valueOf(data1.getText()));
+                startTransitionSending();
 
-        macDst.textProperty().addListener((observable, oldValue, newValue) -> {
+            }
+        });
 
 
-                    if (checkMacAdressCorrectness(newValue)) {
-                        goosePacket.setMacDst(newValue);
-                        startTransitionSending();
+        data2.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data2.getText())) {
+                goosePacket.setData(Boolean.valueOf(data2.getText()));
+                startTransitionSending();
 
-                    }
+            }
+        });
 
-                }
+        data3.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data3.getText())) {
+                goosePacket.setData(Boolean.valueOf(data3.getText()));
+                startTransitionSending();
 
-        );
+            }
+        });
 
-        gocbRef.textProperty().addListener((observable, oldValue, newValue) -> {
+        data4.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data4.getText())) {
+                goosePacket.setData(Boolean.valueOf(data4.getText()));
+                startTransitionSending();
 
+            }
+        });
 
-                    if (checkGocbRefCorrectness(newValue)) {
-                        goosePacket.setGocbRef(newValue);
-                        startTransitionSending();
+        data5.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data5.getText())) {
+                goosePacket.setData(Boolean.valueOf(data5.getText()));
+                startTransitionSending();
 
-                    }
+            }
+        });
 
-                }
+        data6.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data6.getText())) {
+                goosePacket.setData(Boolean.valueOf(data6.getText()));
+                startTransitionSending();
 
-        );
+            }
+        });
 
-        datSet.textProperty().addListener((observable, oldValue, newValue) -> {
+        data7.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && checkBooleanTextCorrectness(data7.getText())) {
+                goosePacket.setData(Boolean.valueOf(data7.getText()));
+                startTransitionSending();
 
-
-                    if (checkDatSetCorrectness(newValue)) {
-                        goosePacket.setDatSet(newValue);
-                        startTransitionSending();
-
-                    }
-
-                }
-
-        );
-
-
-        goID.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkGoIdCorrectness(newValue)) {
-                        goosePacket.setGoID(newValue);
-                        startTransitionSending();
-
-                    }
-
-                }
-
-        );
-
-
-        simulation.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setSimulation(Boolean.valueOf(newValue));
-                        startTransitionSending();
-
-                    }
-
-                }
-
-        );
-
-        simulation.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setSimulation(Boolean.valueOf(newValue));
-                        startTransitionSending();
-
-                    }
-
-                }
-
-        );
-
-
-        confRef.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkIntegerTextCorrectness(newValue)) {
-                        goosePacket.setConfRef(Integer.valueOf(newValue));
-                        startTransitionSending();
-
-                    }
-                }
-
-        );
-
-        ndsCom.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setNdsCom(Boolean.valueOf(newValue));
-                        startTransitionSending();
-//
-                    }
-
-                }
-
-        );
-
-        data.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData(Boolean.valueOf(newValue));
-                         startTransitionSending();
-                    }
-
-                }
-
-        );
-
-
-        data1.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData1(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-        data2.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData2(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-
-        data2.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData2(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-
-        data3.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData3(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-        data4.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData4(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-        data5.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData5(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-        data6.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData6(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
-
-        data7.textProperty().addListener((observable, oldValue, newValue) -> {
-
-
-                    if (checkBooleanTextCorrectness(newValue)) {
-                        goosePacket.setData7(Boolean.valueOf(newValue));
-                        startTransitionSending();
-                    }
-
-                }
-
-        );
+            }
+        });
 
 
     }
