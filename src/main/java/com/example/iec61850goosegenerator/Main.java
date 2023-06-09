@@ -12,7 +12,7 @@ public class Main extends Application {
     public void start(Stage stage) throws IOException {
 
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("goose-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 821, 527);
+        Scene scene = new Scene(fxmlLoader.load(), 700, 480);
         stage.setTitle("Goose Generator");
         stage.setScene(scene);
         stage.show();
