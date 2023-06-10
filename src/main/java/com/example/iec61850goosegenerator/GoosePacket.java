@@ -86,18 +86,13 @@ public class GoosePacket {
     private final byte dataTag = (byte) 0x83;
     private final byte dataLen = 0x01;
 
-    private boolean[] allData = {data,data1,data2,data3,data4,data5,data6,data7};
 
 
     public byte[] createGoosePayload() {
         int gooseLengthOffset = 0;
         int goosePduLenOffset = 0;
         int dataSetLenOffset = 0;
-
-        // byte[] tempArray = new byte[1000];
-
-        /*все добавляю в temp длины корректрую в result*/
-
+        boolean[] allData = {data,data1,data2,data3,data4,data5,data6,data7};
 
         byte[] tempArray = new byte[1000];
         int offset = 0;
@@ -229,11 +224,11 @@ public class GoosePacket {
         }
         gooseLength[1] = (byte) (offset-3);
         goosePduLen = (byte) (offset - goosePduLenOffset-1);
-        //      dataSetLen = (byte) (offset-dataSetLenOffset);
+        System.arraycopy(gooseLength, 0, tempArray, gooseLengthOffset, gooseLength.length);
+        tempArray[goosePduLenOffset] = goosePduLen;
 
         byte [] result = new byte[offset];
         System.arraycopy(tempArray,0,result,0,offset);
-// System.arraycopy(gooseLength, 0, result, gooseLengthOffset, gooseLength.length);
 
         return result;
     }
