@@ -10,6 +10,8 @@ import lombok.SneakyThrows;
 import java.io.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Controller {
     @FXML
@@ -52,8 +54,8 @@ public class Controller {
 
     private ScheduledFuture steadySendingTask;
     private ScheduledFuture transitionSendingTask;
-    private AtomicInteger stNumForSending = new AtomicInteger(0);
-    private AtomicInteger sqNumForSending = new AtomicInteger(0);
+    private AtomicInteger stNumForSending = new AtomicInteger(1);
+    private AtomicInteger sqNumForSending = new AtomicInteger(1);
     private boolean isDataCorrect;
 
 
@@ -185,16 +187,11 @@ public class Controller {
         goosePacket.setData7(Boolean.valueOf(data7.getText()));
 
 
-
         goosePacket.setNumDatSetEntries(8);
-     //   goosePacket.setAllData(data);
-
-
+        //   goosePacket.setAllData(data);
 
 
     }
-
-
 
 
     private void checkTextFieldsCorrectness(Alert alert) {
@@ -289,39 +286,116 @@ public class Controller {
     @SneakyThrows
     private void startTransitionSending() {
         if (steadySendingTask != null && transitionSendingTask == null) {
-            steadySendingTask.cancel(true);
-            steadySendingTask = null;
-            sqNumForSending.set(0);
-            goosePacket.setSqNum(sqNumForSending.get());
-            AtomicInteger cycleCount = new AtomicInteger(1);
-            AtomicInteger time = new AtomicInteger(2);
-
-            long startTime = System.currentTimeMillis();
-            long endTime = startTime + 2000;
-
-            transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
-
-
-//                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
-//                    if (!(System.currentTimeMillis() < endTime)) {
-//                        break;
-//                    }
-                if (time.get()==2000) {
-                    transitionSendingTask.cancel(true);
-                    transitionSendingTask = null;
-                    startSteadySending();
+            while (!steadySendingTask.isCancelled()) {
+                if (steadySendingTask.getDelay(TimeUnit.MILLISECONDS) > 1998) {
+                    steadySendingTask.cancel(true);
 
                 }
-                    time.set((int) Math.pow(time.get(),cycleCount.get()));
-                    sendingPacket.sendPackets(goosePacket);
-                    stNumForSending.incrementAndGet();
-                    goosePacket.setStNum(stNumForSending.get());
+            }
+            steadySendingTask = null;
+//            steadySendingTask.cancel(true);
+//            steadySendingTask = null;
+            sqNumForSending.set(0);
+            goosePacket.setSqNum(sqNumForSending.get());
 
 
+            AtomicInteger cycleCount = new AtomicInteger(2);
+//            AtomicInteger time = new AtomicInteger(2);
+//
+//            long startTime = System.currentTimeMillis();
+//            long endTime = startTime + 2000;
+//
+//            Lock lock1 = new ReentrantLock();
+//            transitionSendingTask = transitionSendingExecutors.schedule(() -> {
+//
+//               // lock1.lock();
+///*МБ СДЕЛАТЬ i в lock*/
+//                for (int i = 2; i <= 2049; i *= 2) {
+//
+//                    if (i == 2048) {
+//                        i = i - 48;
+//                    }
+//
+//
+//                    try {
+//
+//                        stNumForSending.incrementAndGet();
+//                        goosePacket.setStNum(stNumForSending.get());
+//                        goosePacket.setTimeAllowedtoLive((int) (i * 1.5));
+//                        sendingPacket.sendPackets(goosePacket);
+//     //                   Thread.sleep(i);
+//
+//                       if (i!=2) {
+//                           Thread.sleep(i);
+//                       }
+//
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+////                lock1.unlock();
+//
+//
+//            }, 0, TimeUnit.MILLISECONDS);
 
-                cycleCount.incrementAndGet();
+            Thread thread = new Thread(() -> {
 
-            }, 0, time.get(), TimeUnit.MILLISECONDS);
+                while (cycleCount.get() < 2049) {
+
+
+                    try {
+                        if (cycleCount.get() == 2048) {
+                            cycleCount.set(cycleCount.get() - 48);
+                        }
+                        if (cycleCount.get() != 2) {
+                            Thread.sleep(cycleCount.get());
+                        }
+                        stNumForSending.incrementAndGet();
+                        goosePacket.setStNum(stNumForSending.get());
+                        goosePacket.setTimeAllowedtoLive((int) (cycleCount.get() * 1.5));
+                        sendingPacket.sendPackets(goosePacket);
+                        cycleCount.set(cycleCount.get() * 2);
+
+//                       if (i!=2) {
+//                           Thread.sleep(i);
+//                       }
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread.start();
+
+            Thread.sleep(6064);//4046
+            //transitionSendingTask.cancel(true);
+            transitionSendingTask = null;
+            startSteadySending();
+
+//
+//            transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
+//
+//
+////                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
+////                    if (!(System.currentTimeMillis() < endTime)) {
+////                        break;
+////                    }
+//                if (time.get()==2000) {
+//                    transitionSendingTask.cancel(true);
+//                    transitionSendingTask = null;
+//                    startSteadySending();
+//
+//                }
+//                    time.set((int) Math.pow(time.get(),cycleCount.get()));
+//                    sendingPacket.sendPackets(goosePacket);
+//                    stNumForSending.incrementAndGet();
+//                    goosePacket.setStNum(stNumForSending.get());
+//
+//
+//
+//                cycleCount.incrementAndGet();
+//
+//            }, 0, time.get(), TimeUnit.MILLISECONDS);
 //            Thread.sleep(2000);
 //            transitionSendingTask.cancel(true);
 //            transitionSendingTask = null;
@@ -333,10 +407,11 @@ public class Controller {
 
     private void startSteadySending() {
         if (steadySendingTask == null) {
+            goosePacket.setTimeAllowedtoLive(3000);
             steadySendingTask = steadySendingThread.scheduleWithFixedDelay(() -> {
-                sendingPacket.sendPackets(goosePacket);
                 sqNumForSending.incrementAndGet();
                 goosePacket.setSqNum(sqNumForSending.get());
+                sendingPacket.sendPackets(goosePacket);
 
 
             }, 0, 2, TimeUnit.SECONDS);
@@ -410,7 +485,6 @@ public class Controller {
 
             }
         });
-
 
 
         data1.setOnKeyPressed(event -> {
@@ -488,7 +562,7 @@ public class Controller {
 
 
     private boolean checkGoIdCorrectness(String s) {
-        return s.matches("[A-Z0-9]{4}_[A-Z0-9]{3}_\\d{2}" );// мб сделать совокупность символов и тире
+        return s.matches("[A-Z0-9]{4}_[A-Z0-9]{3}_\\d{2}" );
     }
 
 
