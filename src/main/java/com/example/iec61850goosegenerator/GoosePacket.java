@@ -41,7 +41,7 @@ public class GoosePacket {
     private String goID;
     private final byte goIDtag = (byte) 0x83;
     //  private final byte goIDlen = 0x0b;
-    private int t = (int) (System.currentTimeMillis() / 1000) + 3 * 60 * 60;
+    private int t;
 
     private final byte tTag = (byte) 0x84;
     private final byte tLen = 0x08;
@@ -234,11 +234,8 @@ public class GoosePacket {
     }
 
 
-    public static String getUTC() {
-
-        SimpleDateFormat sdf = new SimpleDateFormat("MM dd yyyy hh:mm");
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        return sdf.format(cal.getTime());
+    public static int getCurrentTimeForT() {
+        return  (int) (System.currentTimeMillis() / 1000) + 3 * 60 * 60;
 
 
     }

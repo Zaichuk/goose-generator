@@ -295,6 +295,7 @@ public class Controller {
             steadySendingTask = null;
 //            steadySendingTask.cancel(true);
 //            steadySendingTask = null;
+            goosePacket.setT(GoosePacket.getCurrentTimeForT());
             sqNumForSending.set(0);
             goosePacket.setSqNum(sqNumForSending.get());
 
