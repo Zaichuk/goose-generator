@@ -10,8 +10,7 @@ import lombok.SneakyThrows;
 import java.io.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+
 
 public class Controller {
     @FXML
@@ -58,8 +57,7 @@ public class Controller {
     private AtomicInteger sqNumForSending = new AtomicInteger(1);
     private boolean isDataCorrect;
 
-
-    GoosePacket goosePacket = new GoosePacket();
+    private GoosePacket goosePacket = new GoosePacket();
 
 
     @FXML
@@ -68,9 +66,6 @@ public class Controller {
 
         Alert alert = new Alert(Alert.AlertType.ERROR);
         checkTextFieldsCorrectness(alert);
-
-//        goosePacket.setTimeAllowedtoLive(4805);
-//        goosePacket.setNumDatSetEntries(8);
 
 
         if (isDataCorrect) {
@@ -106,56 +101,6 @@ public class Controller {
 
     private void setGoosePacketByTextFields() {
 
-//        TextField[] textFieldsArray = new TextField[]{macDst, macSrc, gocbRef, datSet, goID, data, data1, data2, data3, data4, data5, data6, data7};
-//        Class<? extends GoosePacket> aClass = goosePacket.getClass();
-//        Field[] declaredFields = aClass.getDeclaredFields();
-//
-//
-//        for (int i = 0; i < textFieldsArray.length; i++) {
-//            int finalI = i;
-//            textFieldsArray[i].textProperty().addListener((observable, oldValue, newValue) -> {
-//
-//                Field field = declaredFields[finalI];
-//                if (textFieldsArray[finalI].getText().equals(field.getName())) {
-//                    field.setAccessible(true);
-//
-//                    if (field.getType().getSimpleName().equals(int.class.getSimpleName())) {
-//                        try {
-//                            /* тип new value и тип поля goosePacket совпадают?*/
-//
-//                            field.set(goosePacket, Integer.valueOf(newValue));
-//                        } catch (IllegalAccessException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    } else if (field.getType().getSimpleName().equals(String.class.getSimpleName())) {
-//
-//                        try {
-//                            /* тип new value и тип поля goosePacket совпадают?*/
-//
-//                            field.set(goosePacket, newValue);
-//                        } catch (IllegalAccessException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//
-//                    }else {
-//                        try {
-//                            /* тип new value и тип поля goosePacket совпадают?*/
-//
-//                            field.set(goosePacket, Boolean.valueOf(newValue));
-//                        } catch (IllegalAccessException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    }
-//
-//
-//                }
-//
-//
-//                    }
-//
-//            );
-//        }
-        /*я хочу чтобы по изменеию новое значени добавлялосмь в пакет и запускался поток */
         goosePacket.setMacDst(macDst.getText());
         goosePacket.setMacSrc(macSrc.getText());
 
@@ -172,10 +117,6 @@ public class Controller {
         goosePacket.setConfRef(Integer.valueOf(confRef.getText()));
         goosePacket.setNdsCom(Boolean.valueOf(ndsCom.getText()));
 
-        /*тут соит сетить поля data в goosePacket*/
-
-//        boolean[] data = {Boolean.getBoolean(this.data.getText()), Boolean.getBoolean(data1.getText()), Boolean.getBoolean(data2.getText()), Boolean.getBoolean(data3.getText()), Boolean.getBoolean(data4.getText()), Boolean.getBoolean(data5.getText()), Boolean.getBoolean(data6.getText()), Boolean.getBoolean(data7.getText())};
-
 
         goosePacket.setData(Boolean.valueOf(data.getText()));
         goosePacket.setData1(Boolean.valueOf(data1.getText()));
@@ -186,9 +127,7 @@ public class Controller {
         goosePacket.setData6(Boolean.valueOf(data6.getText()));
         goosePacket.setData7(Boolean.valueOf(data7.getText()));
 
-
         goosePacket.setNumDatSetEntries(8);
-        //   goosePacket.setAllData(data);
 
 
     }
@@ -293,51 +232,12 @@ public class Controller {
                 }
             }
             steadySendingTask = null;
-//            steadySendingTask.cancel(true);
-//            steadySendingTask = null;
             goosePacket.setT(GoosePacket.getCurrentTimeForT());
             sqNumForSending.set(0);
             goosePacket.setSqNum(sqNumForSending.get());
 
 
             AtomicInteger cycleCount = new AtomicInteger(2);
-//            AtomicInteger time = new AtomicInteger(2);
-//
-//            long startTime = System.currentTimeMillis();
-//            long endTime = startTime + 2000;
-//
-//            Lock lock1 = new ReentrantLock();
-//            transitionSendingTask = transitionSendingExecutors.schedule(() -> {
-//
-//               // lock1.lock();
-///*МБ СДЕЛАТЬ i в lock*/
-//                for (int i = 2; i <= 2049; i *= 2) {
-//
-//                    if (i == 2048) {
-//                        i = i - 48;
-//                    }
-//
-//
-//                    try {
-//
-//                        stNumForSending.incrementAndGet();
-//                        goosePacket.setStNum(stNumForSending.get());
-//                        goosePacket.setTimeAllowedtoLive((int) (i * 1.5));
-//                        sendingPacket.sendPackets(goosePacket);
-//     //                   Thread.sleep(i);
-//
-//                       if (i!=2) {
-//                           Thread.sleep(i);
-//                       }
-//
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-////                lock1.unlock();
-//
-//
-//            }, 0, TimeUnit.MILLISECONDS);
 
             Thread thread = new Thread(() -> {
 
@@ -368,39 +268,10 @@ public class Controller {
             });
             thread.start();
 
-            Thread.sleep(6064);//4046
-            //transitionSendingTask.cancel(true);
+            Thread.sleep(6064);
             transitionSendingTask = null;
             startSteadySending();
 
-//
-//            transitionSendingTask = transitionSendingExecutors.scheduleWithFixedDelay(() -> {
-//
-//
-////                for (int i = 0; i < Math.pow(2, cycleCount.get()); i++) {
-////                    if (!(System.currentTimeMillis() < endTime)) {
-////                        break;
-////                    }
-//                if (time.get()==2000) {
-//                    transitionSendingTask.cancel(true);
-//                    transitionSendingTask = null;
-//                    startSteadySending();
-//
-//                }
-//                    time.set((int) Math.pow(time.get(),cycleCount.get()));
-//                    sendingPacket.sendPackets(goosePacket);
-//                    stNumForSending.incrementAndGet();
-//                    goosePacket.setStNum(stNumForSending.get());
-//
-//
-//
-//                cycleCount.incrementAndGet();
-//
-//            }, 0, time.get(), TimeUnit.MILLISECONDS);
-//            Thread.sleep(2000);
-//            transitionSendingTask.cancel(true);
-//            transitionSendingTask = null;
-//            startSteadySending();
 
         }
     }
@@ -422,20 +293,13 @@ public class Controller {
 
     public void saveData(TextField[] textFields) {
 
-
         try {
-
-
             FileWriter writer = new FileWriter("src/main/resources/com/example/iec61850goosegenerator/Data.txt" );
-
-
             for (TextField tf : textFields) {
                 writer.write(tf.getText());
                 writer.write(System.lineSeparator());
 
             }
-
-
             writer.close();
 
         } catch (IOException e) {
@@ -574,25 +438,4 @@ public class Controller {
     private boolean checkBooleanTextCorrectness(String s) {
         return s.matches("^(true|false)$" );
     }
-//
-//    private void addListenerForTextFields() {
-//        destField.textProperty().addListener((observable, oldValue, newValue) -> {
-//            if (transitionSendingTask == null) {
-//                steadySendingTask.cancel(true);
-//
-//                transitionSendingTask = transitionSendingThread.scheduleWithFixedDelay(() -> {
-//                    sendingPacket.sendPackets(goosePacket);
-//                    sqNumForSending.incrementAndGet();
-//                    if (stNumForSending.get() !=0) {
-//                        stNumForSending.set(0);
-//                    }
-//
-//                    goosePacket.setStNum(sqNumForSending.get());
-//
-//
-//                }, 0, 2, TimeUnit.MILLISECONDS);
-//            }
-//        });
-//
-//    }
 }

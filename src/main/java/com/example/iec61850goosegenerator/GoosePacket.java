@@ -18,7 +18,7 @@ public class GoosePacket {
     private short type;
     private byte[] appid = {00, 0x05};
 
-    private byte[] gooseLength = {00, (byte) 0x98};// до типа пакета
+    private byte[] gooseLength = {00, (byte) 0x98};
     private static final byte[] reserved1 = {0x00, 0x00};
     private static final byte[] reserved2 = {0x00, 0x00};
 
@@ -29,18 +29,14 @@ public class GoosePacket {
     private String gocbRef;
 
     private final byte gocbRefTag = (byte) 0x80;
-    //private final byte gobRefLen = 0x22;
     private int timeAllowedtoLive;
 
     private final byte timeAllowedtoLiveTag = (byte) 0x81;
-    //private final byte timeAllowedtoLiveLen = 0x02;
     private String datSet;
 
     private final byte datSetTag = (byte) 0x82;
-    // private final byte datSetLen = 0x21;//33
     private String goID;
     private final byte goIDtag = (byte) 0x83;
-    //  private final byte goIDlen = 0x0b;
     private int t;
 
     private final byte tTag = (byte) 0x84;
@@ -48,10 +44,8 @@ public class GoosePacket {
     private int stNum;
 
     private final byte stNumTag = (byte) 0x85;
-    //private final byte stNumLen = 0x01;
     private int sqNum;
     private final byte sqNumTag = (byte) 0x86;
-    // private final byte sqNumLen = 0x03;
     private boolean simulation;
     private final byte simulationTag = (byte) 0x87;
     private final byte simulationLen = 0x01;
@@ -98,7 +92,7 @@ public class GoosePacket {
         int offset = 0;
         System.arraycopy(appid, 0, tempArray, offset, appid.length);
         offset += appid.length;
-        gooseLengthOffset = offset;// gooseLen = lastOffset
+        gooseLengthOffset = offset;
         System.arraycopy(gooseLength, 0, tempArray, offset, gooseLength.length);
         offset += gooseLength.length;
 
@@ -112,14 +106,14 @@ public class GoosePacket {
         offset++;
         tempArray[offset] = containerSize;
         offset++;
-        goosePduLenOffset = offset;// goosePdulen = lastOffset - goosePduOffset+1
+        goosePduLenOffset = offset;
         tempArray[offset] = goosePduLen;
         offset++;
 
-        tempArray[offset] = gocbRefTag;// отчет байтов отсюда
+        tempArray[offset] = gocbRefTag;
         offset++;
         byte[] gocbRefBytes = ByteConverter.convertToBytes(gocbRef);
-        tempArray[offset] = (byte) gocbRefBytes.length;//???
+        tempArray[offset] = (byte) gocbRefBytes.length;
         offset++;
         System.arraycopy(gocbRefBytes, 0, tempArray, offset, gocbRefBytes.length);
         offset += gocbRefBytes.length;
