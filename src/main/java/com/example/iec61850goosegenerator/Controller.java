@@ -8,6 +8,7 @@ import javafx.scene.input.KeyCode;
 import lombok.SneakyThrows;
 
 import java.io.*;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,10 +50,8 @@ public class Controller {
 
     private final SendingPackets sendingPacket = new SendingPackets();
     private final ScheduledExecutorService steadySendingThread = Executors.newSingleThreadScheduledExecutor();
-    private final ScheduledExecutorService transitionSendingExecutors = Executors.newSingleThreadScheduledExecutor();
 
-    private ScheduledFuture steadySendingTask;
-    private ScheduledFuture transitionSendingTask;
+    private Optional<ScheduledFuture> steadySendingTask  = Optional.ofNullable(null);;
     private AtomicInteger stNumForSending = new AtomicInteger(1);
     private AtomicInteger sqNumForSending = new AtomicInteger(1);
     private boolean isDataCorrect;
@@ -65,6 +64,7 @@ public class Controller {
 
 
         Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setHeaderText("GOOSE Generator Eror");
         checkTextFieldsCorrectness(alert);
 
 
@@ -88,14 +88,11 @@ public class Controller {
 
     @FXML
     public void onStopButtonClick(ActionEvent actionEvent) {
-        if (steadySendingTask != null) {
-            steadySendingTask.cancel(true);
-            steadySendingTask = null;
+        if (steadySendingTask.isPresent()) {
+            steadySendingTask.get().cancel(true);
+            steadySendingTask = Optional.ofNullable(null);
         }
-        if (transitionSendingTask != null) {
-            transitionSendingTask.cancel(true);
-            transitionSendingTask = null;
-        }
+
     }
 
 
@@ -218,20 +215,19 @@ public class Controller {
 
             isDataCorrect = true;
         }
-//
+
     }
 
-    //!steadySendingTask.isCancelled()
     @SneakyThrows
     private void startTransitionSending() {
-        if (steadySendingTask != null && transitionSendingTask == null) {
-            while (!steadySendingTask.isCancelled()) {
-                if (steadySendingTask.getDelay(TimeUnit.MILLISECONDS) > 1998) {
-                    steadySendingTask.cancel(true);
+        if (steadySendingTask.isPresent()) {
+            while (!steadySendingTask.get().isCancelled()) {
+                if (steadySendingTask.get().getDelay(TimeUnit.MILLISECONDS) > 1998) {
+                    steadySendingTask.get().cancel(true);
 
                 }
             }
-            steadySendingTask = null;
+            steadySendingTask = Optional.ofNullable(null);;
             goosePacket.setT(GoosePacket.getCurrentTimeForT());
             sqNumForSending.set(0);
             goosePacket.setSqNum(sqNumForSending.get());
@@ -257,9 +253,7 @@ public class Controller {
                         sendingPacket.sendPackets(goosePacket);
                         cycleCount.set(cycleCount.get() * 2);
 
-//                       if (i!=2) {
-//                           Thread.sleep(i);
-//                       }
+
 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -269,7 +263,6 @@ public class Controller {
             thread.start();
 
             Thread.sleep(6064);
-            transitionSendingTask = null;
             startSteadySending();
 
 
@@ -278,15 +271,15 @@ public class Controller {
 
 
     private void startSteadySending() {
-        if (steadySendingTask == null) {
+        if (steadySendingTask.isEmpty()) {
             goosePacket.setTimeAllowedtoLive(3000);
-            steadySendingTask = steadySendingThread.scheduleWithFixedDelay(() -> {
+            steadySendingTask =  Optional.of(steadySendingThread.scheduleWithFixedDelay(() -> {
                 sqNumForSending.incrementAndGet();
                 goosePacket.setSqNum(sqNumForSending.get());
                 sendingPacket.sendPackets(goosePacket);
 
 
-            }, 0, 2, TimeUnit.SECONDS);
+            }, 0, 2, TimeUnit.SECONDS));
         }
     }
 
